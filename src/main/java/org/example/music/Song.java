@@ -1,8 +1,12 @@
 package org.example.music;
 
-//public record Song(String artist, String title, int duration) {}
+import org.example.site.database.DatabaseConnection;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Song {
     public String artist;
@@ -15,6 +19,10 @@ public class Song {
         this.duration = duration;
     }
 
+    public int getDuration() {
+        return duration;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -24,7 +32,34 @@ public class Song {
     }
 
     @Override
+    public String toString() {
+        return "Song{" +
+                "artist='" + artist + '\'' +
+                ", title='" + title + '\'' +
+                ", duration=" + duration +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(artist, title, duration);
+    }
+
+    public static class Persistence {
+        public static Optional<Song> read(int id, DatabaseConnection databaseConnection) throws SQLException {
+            String sql = "SELECT artist, title, length FROM song WHERE id = ?";
+            PreparedStatement statement = databaseConnection.getConnection().prepareStatement(sql);
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+
+            if(resultSet.next()) {
+                return Optional.of(new Song(
+                        resultSet.getString("artist"),
+                        resultSet.getString("title"),
+                        resultSet.getInt("length")
+                ));
+            }
+            return Optional.empty();
+        }
     }
 }
